@@ -1,0 +1,61 @@
+# ai-dev-starter | profile-preset | v0.1.0
+# Single automation entrypoint (https://taskfile.dev). Run `task --list` to see targets.
+version: "3"
+
+vars:
+  BACKEND: backend
+  FRONTEND: frontend
+
+tasks:
+  default:
+    cmds: [task --list]
+    silent: true
+
+  # --- Local stack ---------------------------------------------------------
+  up:
+    desc: Start the full dev stack (db + backend + frontend)
+    cmds: ["docker compose up"]
+  down:
+    desc: Tear down the dev stack
+    cmds: ["docker compose down"]
+
+  # --- Backend (Go) --------------------------------------------------------
+  build:back:
+    desc: Compile the Go backend
+    dir: "{{.BACKEND}}"
+    cmds: ["go build -o ./bin/app ."]
+  test:back:
+    desc: Run Go tests
+    dir: "{{.BACKEND}}"
+    cmds: ["go test ./..."]
+  sqlc:
+    desc: Regenerate sqlc code from db/queries/*.sql
+    dir: "{{.BACKEND}}"
+    cmds: ["sqlc generate"]
+
+  # --- Frontend (React) ----------------------------------------------------
+  install:front:
+    desc: Install frontend dependencies
+    dir: "{{.FRONTEND}}"
+    cmds: ["npm install"]
+  build:front:
+    desc: Production build of the frontend
+    dir: "{{.FRONTEND}}"
+    cmds: ["npm run build"]
+  typecheck:
+    desc: Typecheck the frontend (tsc --noEmit)
+    dir: "{{.FRONTEND}}"
+    cmds: ["npm run typecheck"]
+
+  # --- Verification gate (used by execute-task) ----------------------------
+  verify:
+    desc: Build backend + typecheck frontend (the review gate)
+    cmds:
+      - task: build:back
+      - task: typecheck
+
+  # --- Deploy (roadmap seam — not implemented in v0.1.0) -------------------
+  deploy:
+    desc: "ROADMAP: deploy to a host. Implement via SSH+compose or a deployment MCP."
+    cmds:
+      - 'echo "deploy is a designed extension seam — not implemented yet (see preset.yaml roadmap)"'

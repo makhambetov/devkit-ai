@@ -1,0 +1,17 @@
+{
+  "name": "devkit-ai",
+  "owner": {
+    "name": "Ivan Makhambetov"
+  },
+  "metadata": {
+    "description": "A marketplace of Claude Code plugins for AI-driven development.",
+    "pluginRoot": "./plugins"
+  },
+  "plugins": [
+    {
+      "name": "ai-dev-starter",
+      "source": "ai-dev-starter",
+      "description": "Bootstrap new projects from a researched, documented, wave-executed methodology. Provides /bootstrap-project and /starter-sync; carries the core templates and the go-react-monorepo profile as assets."
+    }
+  ]
+}

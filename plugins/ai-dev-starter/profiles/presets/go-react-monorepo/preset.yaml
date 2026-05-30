@@ -1,0 +1,41 @@
+# ai-dev-starter | profile-preset | v0.1.0
+name: go-react-monorepo
+description: >
+  Polyglot monorepo: a Go + Gin backend and a React + Vite frontend in sibling sub-directories,
+  backed by PostgreSQL, with optional Go CLI tools. The reference preset.
+
+# Which components compose this preset, and where each lives.
+components:
+  - use: go-gin-backend
+    subdir: backend
+  - use: react-vite-frontend
+    subdir: frontend
+  - use: postgres            # infra-only
+  - use: go-cli              # optional; include if the project needs an importer/admin tool
+    subdir: cmd/importer
+    optional: true
+
+# Seam agents apply only because BOTH a backend and a frontend share an HTTP/JSON contract.
+# They belong to the composition, not to any single component.
+seam_agents:
+  - api-contract-reviewer    # verifies Go DTO (json tags) ↔ frontend src/types.ts parity
+
+# Infra files this preset materializes at the repo root.
+infra:
+  - docker-compose.yaml
+  - Taskfile.yml
+  - .env.example
+
+# Verification gates the execute-task skill runs, per component touched.
+verify:
+  backend: "go build -o ./bin/app ."
+  frontend: "npm run typecheck"
+  seam: "both of the above"   # run all when a cross-component contract changes
+
+# Designed extension seam — not implemented in v0.1.0.
+roadmap:
+  deploy:
+    seam: "task deploy"
+    options:
+      - "SSH + docker compose on a host (works today; mirrors a typical CI deploy)"
+      - "Deployment MCP server, if the target host/platform exposes one (research first)"

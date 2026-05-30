@@ -1,0 +1,26 @@
+# ai-dev-starter | profile-component | v0.1.0
+name: react-vite-frontend
+description: React 19 + Vite + TypeScript single-page app consuming a JSON API.
+stack:
+  language: TypeScript
+  framework: React 19
+  bundler: Vite
+default_subdir: frontend
+commands:
+  install: "npm install"
+  dev: "npm run dev"
+  build: "npm run build"
+  typecheck: "npm run typecheck"   # tsc --noEmit
+verify: "npm run typecheck"
+layout:
+  - src/components/        # view + UI components
+  - src/types.ts           # API/domain TypeScript types (mirror backend DTOs)
+  - src/api/               # fetch hooks / data layer
+agents:
+  - react-specialist
+  - typescript-pro
+skills:
+  - i18n-key-checker       # include only if the project is internationalized
+contributes_to_infra:
+  taskfile: true           # adds npm install/build/typecheck tasks
+  dockerfile: frontend/docker/Dockerfile

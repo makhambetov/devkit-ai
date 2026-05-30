@@ -1,0 +1,17 @@
+# ai-dev-starter | profile-component | v0.1.0
+name: go-cli
+description: Go command-line tool (e.g. a data importer or admin utility), typically sharing the backend's internal packages in a monorepo.
+stack:
+  language: Go
+default_subdir: cmd/importer
+commands:
+  build: "go build -o ./bin/cli ./cmd/importer"
+  run: "go run ./cmd/importer"
+verify: "go build -o ./bin/cli ./cmd/importer"
+notes: >
+  In a monorepo with go-gin-backend, a go-cli component usually lives under the same Go module
+  (cmd/<tool>) and reuses internal/service + internal/repository rather than duplicating logic.
+agents:
+  - golang-pro
+contributes_to_infra:
+  taskfile: true

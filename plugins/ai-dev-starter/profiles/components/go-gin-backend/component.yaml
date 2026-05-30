@@ -1,0 +1,33 @@
+# ai-dev-starter | profile-component | v0.1.0
+name: go-gin-backend
+description: Go + Gin REST API with a layered architecture (handler → service → repository → sqlc → migrations).
+stack:
+  language: Go
+  framework: Gin
+  db_access: sqlc + pgx
+default_subdir: backend
+commands:
+  build: "go build -o ./bin/app ."
+  test: "go test ./..."
+  run: "go run ."
+  codegen: "task sqlc"      # generate type-safe queries from db/queries/*.sql
+verify: "go build -o ./bin/app ."
+layout:
+  - cmd/                    # entrypoints (server, CLIs)
+  - internal/handler/       # HTTP layer (Gin)
+  - internal/service/       # business logic
+  - internal/repository/    # thin wrappers over sqlc
+  - internal/database/      # sqlc-generated (do not hand-edit)
+  - internal/dto/           # JSON response shapes
+  - internal/apperror/      # error envelope (status + body)
+  - internal/middleware/    # auth, CORS, logging
+  - db/migrations/          # schema migrations
+  - db/queries/             # sqlc source queries
+agents:                     # from profile, copied into .claude/agents/
+  - golang-pro
+  - postgres-pro
+skills:                     # copied into .claude/skills/
+  - sqlc-workflow
+contributes_to_infra:
+  taskfile: true            # adds go build/test/sqlc tasks
+  dockerfile: backend/Dockerfile

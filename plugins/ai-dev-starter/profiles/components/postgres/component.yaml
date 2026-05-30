@@ -1,0 +1,17 @@
+# ai-dev-starter | profile-component | v0.1.0
+name: postgres
+description: PostgreSQL database service (infrastructure component — no source sub-directory of its own; provides a compose service + volume).
+stack:
+  engine: PostgreSQL 15
+default_subdir: null          # infra-only; schema lives with the backend (db/migrations)
+agents:
+  - postgres-pro
+contributes_to_infra:
+  compose_service: db
+  compose_volume: postgres_data
+  env:
+    - DB_NAME
+    - DB_PASSWORD
+notes: >
+  Provisions the db service in docker-compose and a named volume for durable storage. Migrations
+  and sqlc queries belong to the owning backend component, not here.

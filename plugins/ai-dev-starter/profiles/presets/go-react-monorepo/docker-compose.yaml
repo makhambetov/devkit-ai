@@ -1,0 +1,43 @@
+# ai-dev-starter | profile-preset | v0.1.0
+# Local development stack for the go-react-monorepo preset.
+# Copy .env.example to .env before running `docker compose up` (or `task up`).
+services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: ${DB_NAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    env_file:
+      - .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    ports:
+      - "8081:8080"        # host 8081 → container 8080
+    env_file:
+      - .env
+    depends_on:
+      - db
+    volumes:
+      - app_storage:/app/storage   # durable file storage (uploads, etc.)
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: docker/Dockerfile
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:
+  app_storage:
