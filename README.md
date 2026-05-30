@@ -31,7 +31,7 @@ Local development:
 ```
 devkit-ai/                          ← the marketplace (repo root)
 ├── .claude-plugin/
-│   └── marketplace.json            ← catalog: owner + plugins[]; metadata.pluginRoot "./plugins"
+│   └── marketplace.json            ← catalog: owner + plugins[] (each a git-subdir source)
 └── plugins/
     └── ai-dev-starter/             ← a self-contained plugin
         ├── .claude-plugin/plugin.json
@@ -41,8 +41,9 @@ devkit-ai/                          ← the marketplace (repo root)
 ```
 
 Adding a plugin = drop a self-contained plugin directory under `plugins/` and add one entry to
-`marketplace.json`. Because `metadata.pluginRoot` is `./plugins`, each entry's `source` is just the
-folder name (e.g. `"source": "ai-dev-starter"`).
+`marketplace.json` with a `git-subdir` source pointing at this repo and the plugin's `path`
+(matching the form the official Claude Code marketplace uses). A relative `"./plugins/..."` source
+also works for same-repo plugins added via Git, but `git-subdir` is the more robust, widely-supported form.
 
 ## License
 
