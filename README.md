@@ -15,7 +15,7 @@ _More plugins will live alongside under `plugins/`._
 Add the marketplace once, then install any plugin from it:
 
 ```
-/plugin marketplace add <git-url-or-local-path-to-this-repo>
+/plugin marketplace add https://github.com/makhambetov/devkit-ai
 /plugin install ai-dev-starter@devkit-ai
 ```
 

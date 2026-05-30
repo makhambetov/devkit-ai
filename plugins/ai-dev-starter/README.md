@@ -67,7 +67,7 @@ ai-dev-starter/
 ### Install the plugin
 This plugin is distributed via the **devkit-ai** marketplace:
 ```
-/plugin marketplace add <git-url-or-local-path-to-the-devkit-ai-repo>
+/plugin marketplace add https://github.com/makhambetov/devkit-ai
 /plugin install ai-dev-starter@devkit-ai
 ```
 (Local development: `/plugin marketplace add /Users/i.makhambetov/ivan/projects/devkit-ai`.)
