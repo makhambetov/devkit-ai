@@ -1,0 +1,32 @@
+# ai-dev-starter | core (template) | v0.1.1
+# Copied to the new project's ./.gitignore at bootstrap. Add component-specific lines as needed.
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Logs
+*.log
+
+# Secrets / env (commit .env.example, never .env)
+.env
+.env.local
+*.pem
+
+# Node / frontend
+node_modules/
+dist/
+build/
+coverage/
+.vite/
+
+# Go / backend
+bin/
+*.exe
+*.test
+*.out
+
+# Local file storage / uploads
+storage/

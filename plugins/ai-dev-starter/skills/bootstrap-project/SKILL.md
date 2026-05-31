@@ -1,25 +1,44 @@
 ---
 name: bootstrap-project
-description: Use in a new or near-empty repository to bootstrap a project with the ai-dev-starter methodology — runs a deep requirements interview, researches build-vs-buy decisions, and generates a tailored CLAUDE.md, docs/agent/ (SPEC/ARCHITECTURE/DECISIONS/TASKS), agents, skills, and infra from templates. Do not write application code during bootstrap; produce the workspace.
+description: Use in a new or near-empty repository to bootstrap a project with the ai-dev-starter methodology — runs a deep requirements interview, researches build-vs-buy decisions, and generates a tailored CLAUDE.md, docs/agent/ (SPEC/ARCHITECTURE/DECISIONS/TASKS), stories, agents, skills, .gitignore, and infra from templates. Do not write application code during bootstrap; produce the workspace only.
 ---
-<!-- ai-dev-starter | plugin (active) | v0.1.0 -->
+<!-- ai-dev-starter | plugin (active) | v0.1.1 -->
 
 # bootstrap-project
 
 You are bootstrapping a brand-new software project in the current (near-empty) repository.
-Your deliverable is a tailored **project workspace**, not application code. Work the phases below
-**in order** — this is a rigid workflow.
+Your deliverable is a tailored **project workspace** (docs + steering + vendored tooling + infra),
+**not application code**. Work the phases below **in order** — this is a rigid workflow.
 
 The starter's templates and profiles live at **`${CLAUDE_PLUGIN_ROOT}`**:
 `${CLAUDE_PLUGIN_ROOT}/core/` (stack-neutral templates, agents, skills) and
 `${CLAUDE_PLUGIN_ROOT}/profiles/` (components + presets). Read `${CLAUDE_PLUGIN_ROOT}/VERSION`
 and stamp it into generated agent/skill files for drift tracking.
 
-## Phase −1 · Detect companions
-- **superpowers** installed? Prefer its `brainstorming` skill for Phase 0–1 and TDD/debugging
-  later. Otherwise use `${CLAUDE_PLUGIN_ROOT}/core/skills/plan-project`.
-- **context7 MCP** present? Use it for library research in Phase 4.
+## Global rules (apply in every phase)
+
+- **You own the workflow — do NOT delegate it.** If `superpowers` (or any framework with its own
+  brainstorming / writing-plans / executing-plans / subagent-driven-development workflow) is
+  installed, **do not hand planning or execution over to it.** It will produce its own artifacts in
+  its own format and bypass this methodology. Use *only* this skill's phases and, for planning,
+  `${CLAUDE_PLUGIN_ROOT}/core/skills/plan-project`. (You may read superpowers skills for reference,
+  but this skill drives and this skill's artifacts are the deliverable.)
+- **Present every choice with the interactive question tool (AskUserQuestion), not free-text.**
+  Whenever you ask the user to choose (stack options, topology, a library, yes/no), use the
+  interactive selector with concrete options. Reserve free-text for genuinely open prose (vision,
+  module descriptions).
+- **Every research/decision question ends with a "Pick for me" option** (use your best judgement and
+  proceed). This is mandatory for build-vs-buy questions — never force the user to type a choice.
+- **Bootstrap produces a workspace, then STOPS.** Do not scaffold or write application code here;
+  building happens afterward via the generated `execute-task` skill. Phase 7 hands off.
+
+## Phase −1 · Preamble & detection
+- **Conversation language.** Ask (via AskUserQuestion) which language to *converse* in. Default to
+  the user's language. **All generated files and documentation stay in English** regardless — only
+  the chat language changes. Record the choice and use it for the rest of the session.
+- **context7 MCP** present? Use it for library docs during Phase 4 research.
 - Read `core/` and `profiles/` so you know what templates, components, and presets exist.
+- (Note superpowers per the Global rules: do not let it drive.)
 
 ## Phase 0 · Vision
 Interview the user: what product, which users/roles, what problem, what success looks like, hard
@@ -43,37 +62,51 @@ selection: single project or **monorepo**? which components (backend / frontend 
 ## Phase 4 · Tech selection — build-vs-buy (RIGID)
 For every infrastructural concern (auth, persistence, file storage, queues, payments, email, jobs):
 **do not hand-roll.** Research current, well-maintained options (context7 MCP + web). Present
-**2–3 options with trade-offs**, and make the **last option always**: *"Pick for me (use your best
-judgement)."* Record the outcome — choice, alternatives, reason — as an ADR in
-`docs/agent/DECISIONS.md`. Never silently invent a dependency.
+**2–3 options with trade-offs via AskUserQuestion**, and make the **last option always**:
+*"Pick for me (use your best judgement)."* Record the outcome — choice, alternatives, reason — as an
+ADR in `docs/agent/DECISIONS.md`. Never silently invent a dependency.
 
 ## Phase 5 · Profile selection & composition
 From topology + stack decisions: use a matching `profiles/presets/<x>` (e.g. `go-react-monorepo`),
 or compose from `profiles/components/*`, or generate fresh components for a novel stack following
 the existing structure. A preset declares component→sub-directory placement and **seam** agents
-(e.g. `api-contract-reviewer`, only when a backend and frontend share an API).
+(e.g. `api-contract-reviewer`, only when a backend and frontend share an API). A simple single-
+component project still gets the full document set below — only the monorepo/seam parts are skipped.
 
-## Phase 6 · Materialize the workspace
-Generate from `core/` + the chosen profile; fill every `{{PLACEHOLDER}}`:
-1. `CLAUDE.md` from `core/CLAUDE.template.md` + each component's `CLAUDE.partial.md`.
-2. `docs/agent/{SPEC,ARCHITECTURE,DECISIONS,TASKS}.md` from templates, populated from Phases 0–4.
-   Acceptance criteria use **EARS** notation (`WHEN <trigger> THE SYSTEM SHALL <response>`).
-3. Copy `core/agents/*` and the profile's `agents/*` into `.claude/agents/`; fill the
-   `domain-reviewer` slot from Phase 2. Copy needed skills (incl. `core/skills/execute-task`,
-   `plan-project`) into `.claude/skills/`.
-4. Copy the preset's infra (`docker-compose.yaml`, `Taskfile.yml`, `.env.example`); adjust service
-   names/ports from the interview.
-5. Stamp `ai-dev-starter | <layer> | v<VERSION>` into generated agent/skill files so `starter-sync`
-   can track drift later.
+## Phase 6 · Materialize the workspace (HARD CHECKLIST)
+Generate from `core/` + the chosen profile, filling every `{{PLACEHOLDER}}`. Produce **all** of:
 
-## Phase 7 · Hand-off
+1. **`CLAUDE.md`** — from `core/CLAUDE.template.md` + each component's `CLAUDE.partial.md`.
+2. **`docs/agent/SPEC.md`**, **`ARCHITECTURE.md`**, **`DECISIONS.md`**, **`TASKS.md`** — from the
+   templates, populated from Phases 0–4. Acceptance criteria use **EARS** notation.
+   In `TASKS.md`, **every subtask names the specialist agent** that will implement it (see step 4).
+3. **`docs/agent/stories/_TEMPLATE.md`** — copied so the project can write stories.
+4. **`.claude/agents/`** — copy `core/agents/*` and the profile's `agents/*`; fill the
+   `domain-reviewer` slot from Phase 2. For profile agents whose body is not vendored in the plugin
+   (e.g. `react-specialist`, `typescript-pro`), if the user has them in `~/.claude/agents/`, rely on
+   those by name; otherwise note the gap in `CLAUDE.md`. **The goal: `execute-task` must be able to
+   route every subtask to a named specialist, never to a generic general-purpose agent.**
+5. **`.claude/skills/`** — copy `core/skills/execute-task` and `plan-project` (and profile skills).
+6. **`.gitignore`** — copy `core/templates/gitignore` to `./.gitignore` (add component-specific
+   entries). Do not rely on a framework scaffolder to create it.
+7. **Infra** (if the preset has it) — `docker-compose.yaml`, `Taskfile.yml`, `.env.example`; adjust
+   service names/ports from the interview.
+8. **Provenance** — stamp `ai-dev-starter | <layer> | v<VERSION>` into generated agent/skill files.
+
+## Phase 7 · Verify & hand off
+- **Verification gate — do not claim done until these exist** (list them back to the user):
+  `CLAUDE.md`, `docs/agent/{SPEC,ARCHITECTURE,DECISIONS,TASKS}.md`, `docs/agent/stories/_TEMPLATE.md`,
+  `.claude/agents/` (with a named specialist available for every planned subtask),
+  `.claude/skills/execute-task`, `.gitignore`, and any preset infra. If any is missing, create it.
 - Summarize what was created and the first 1–2 tasks from `TASKS.md`.
-- Tell the user how to execute a task (the generated `execute-task` skill) and how to write a story
-  (`docs/agent/stories/_TEMPLATE.md`).
+- Tell the user that **building happens next** via the `execute-task` skill (run it on a task), and
+  how to write a story (`docs/agent/stories/_TEMPLATE.md`).
 - The plugin (templates, profiles) stays installed as upstream; nothing needs deleting from it.
 
-## Rules
+## Rules recap
 - Interview first; write no application code during bootstrap. The deliverable is a workspace.
+- You drive — never delegate the flow to superpowers or another framework.
+- Use AskUserQuestion for choices; every build-vs-buy question includes "Pick for me".
 - Prefer researched, existing solutions over bespoke ones; record every choice in `DECISIONS.md`.
 - Confirm each phase's summary with the user before advancing.
-- All generated documentation is written in **English**.
+- Converse in the user's chosen language; all generated files stay in **English**.
