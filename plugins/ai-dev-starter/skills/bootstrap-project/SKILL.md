@@ -2,7 +2,7 @@
 name: bootstrap-project
 description: Use in a new or near-empty repository to bootstrap a project with the ai-dev-starter methodology — runs a deep requirements interview, researches build-vs-buy decisions, and generates a tailored CLAUDE.md, docs/agent/ (SPEC/ARCHITECTURE/DECISIONS/TASKS), stories, agents, skills, .gitignore, and infra from templates. Do not write application code during bootstrap; produce the workspace only.
 ---
-<!-- ai-dev-starter | plugin (active) | v0.1.1 -->
+<!-- ai-dev-starter | plugin (active) | v0.1.2 -->
 
 # bootstrap-project
 
@@ -81,17 +81,38 @@ Generate from `core/` + the chosen profile, filling every `{{PLACEHOLDER}}`. Pro
    templates, populated from Phases 0–4. Acceptance criteria use **EARS** notation.
    In `TASKS.md`, **every subtask names the specialist agent** that will implement it (see step 4).
 3. **`docs/agent/stories/_TEMPLATE.md`** — copied so the project can write stories.
-4. **`.claude/agents/`** — copy `core/agents/*` and the profile's `agents/*`; fill the
-   `domain-reviewer` slot from Phase 2. For profile agents whose body is not vendored in the plugin
-   (e.g. `react-specialist`, `typescript-pro`), if the user has them in `~/.claude/agents/`, rely on
-   those by name; otherwise note the gap in `CLAUDE.md`. **The goal: `execute-task` must be able to
-   route every subtask to a named specialist, never to a generic general-purpose agent.**
+4. **`.claude/agents/` — provision specialist agents (see "Agent provisioning" below).**
+   The goal: `execute-task` must be able to route every subtask to a **named specialist**, never to
+   a generic general-purpose agent.
 5. **`.claude/skills/`** — copy `core/skills/execute-task` and `plan-project` (and profile skills).
 6. **`.gitignore`** — copy `core/templates/gitignore` to `./.gitignore` (add component-specific
    entries). Do not rely on a framework scaffolder to create it.
 7. **Infra** (if the preset has it) — `docker-compose.yaml`, `Taskfile.yml`, `.env.example`; adjust
    service names/ports from the interview.
 8. **Provenance** — stamp `ai-dev-starter | <layer> | v<VERSION>` into generated agent/skill files.
+
+### Agent provisioning (Phase 6 step 4, in detail)
+Read `${CLAUDE_PLUGIN_ROOT}/core/agent-registry.yaml`. Then:
+
+1. **Determine the needed set.** From the chosen components + the registry's `recommended`:
+   `local` agents (always — `domain-reviewer`, and seam agents like `api-contract-reviewer` when the
+   preset applies) + `recommended.core` + `recommended.components[<each chosen component>]` + any
+   `optional_core` the project clearly needs. Confirm the proposed set with the user.
+2. **Inventory what is already installed.** List existing agents in the project `.claude/agents/`,
+   the user's global `~/.claude/agents/`, and any installed plugins. Match by name.
+3. **Gap analysis.** `gap = needed − already-installed`. Agents that already exist are **reused as-is
+   — never re-install or overwrite them.**
+4. **Confirm & install the gap (AskUserQuestion).** Show: "✅ already available: …(where)" and
+   "⬇️ will install: … from <source>@<ref>". Ask, **per the gap only**, whether to install and
+   **where — project `.claude/agents/` or global `~/.claude/agents/`** (ask each time; do not assume).
+   - Fetch each from the **allowlisted, pinned** source only:
+     `https://raw.githubusercontent.com/<repo>/<ref>/<path>` (paths/refs from the registry). Never
+     fetch from an unlisted repo or an unpinned ref.
+   - `local` agents come from the plugin, not the network: fill `domain-reviewer` from Phase 2; copy
+     the preset's seam agent(s).
+5. **Record provenance.** Write `.claude/agents/AGENT_SOURCES.md` listing each provisioned agent →
+   `<source repo>@<ref>` (or `local: ai-dev-starter`) and its install location. Include the upstream
+   license/attribution from the registry.
 
 ## Phase 7 · Verify & hand off
 - **Verification gate — do not claim done until these exist** (list them back to the user):

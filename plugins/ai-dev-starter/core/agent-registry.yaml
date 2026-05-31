@@ -1,0 +1,51 @@
+# ai-dev-starter | core (template) | v0.1.2
+# Curated, vetted sources of Claude Code subagents.
+#
+# Bootstrap uses this to: (1) determine which specialist agents a project needs,
+# (2) inventory what is ALREADY installed (project .claude/agents + global
+# ~/.claude/agents + plugin-provided), (3) install only the gap — with user
+# confirmation and a chosen location (project vs global) per the "ask each time"
+# rule. We do NOT vendor agent bodies into this plugin; we fetch them from the
+# pinned source at bootstrap, so upstream license/attribution is preserved.
+#
+# Security: this is an ALLOWLIST. Never fetch agent definitions from a repo that
+# is not listed here, and never from an unpinned ref.
+
+sources:
+  voltagent:
+    repo: VoltAgent/awesome-claude-code-subagents
+    url: https://github.com/VoltAgent/awesome-claude-code-subagents
+    ref: 2f9cf8b9562dcc235cc2296bda6df82d60e800be   # pinned for reproducibility
+    license: MIT
+    attribution: "Agents © VoltAgent contributors, MIT License."
+    # Raw fetch URL for a file:
+    #   https://raw.githubusercontent.com/<repo>/<ref>/<path>
+
+# Agent name -> { source, path }. Paths verified at the pinned ref.
+agents:
+  golang-pro:             { source: voltagent, path: categories/02-language-specialists/golang-pro.md }
+  react-specialist:       { source: voltagent, path: categories/02-language-specialists/react-specialist.md }
+  typescript-pro:         { source: voltagent, path: categories/02-language-specialists/typescript-pro.md }
+  postgres-pro:           { source: voltagent, path: categories/05-data-ai/postgres-pro.md }
+  code-reviewer:          { source: voltagent, path: categories/04-quality-security/code-reviewer.md }
+  security-auditor:       { source: voltagent, path: categories/04-quality-security/security-auditor.md }
+  debugger:               { source: voltagent, path: categories/04-quality-security/debugger.md }
+  api-designer:           { source: voltagent, path: categories/01-core-development/api-designer.md }
+  research-analyst:       { source: voltagent, path: categories/10-research-analysis/research-analyst.md }
+  documentation-engineer: { source: voltagent, path: categories/06-developer-experience/documentation-engineer.md }
+
+# Which agents to recommend. 'core' is suggested for every project; 'optional_core'
+# only when the project clearly needs them; 'components' keys match component names.
+recommended:
+  core:          [code-reviewer]                                     # review gate — always
+  optional_core: [debugger, security-auditor, research-analyst, documentation-engineer, api-designer]
+  components:
+    go-gin-backend:      [golang-pro, postgres-pro]
+    react-vite-frontend: [react-specialist, typescript-pro]
+    go-cli:              [golang-pro]
+    postgres:            [postgres-pro]
+
+# Agents provided by ai-dev-starter itself — never fetched externally.
+local:
+  - domain-reviewer        # core slot, filled from SPEC.md Phase 2
+  - api-contract-reviewer  # go-react-monorepo preset seam

@@ -1,25 +1,26 @@
-<!-- ai-dev-starter | core | v0.1.0 -->
+<!-- ai-dev-starter | core | v0.1.2 -->
 # Core agents
 
-Stack-neutral agents shipped with the starter. The bootstrap copies the ones a project needs
-into its `.claude/agents/`. Stack-specific agents (e.g. `golang-pro`, `react-specialist`) come
-from the chosen **profile**; seam agents (e.g. `api-contract-reviewer`) come from the **preset**.
+Two kinds of agents reach a generated project:
+
+- **Local agents** (shipped in this plugin, vendored into `.claude/agents/`): `domain-reviewer`
+  (a slot filled per project) and preset **seam** agents (e.g. `api-contract-reviewer`).
+- **External specialist agents** (`golang-pro`, `react-specialist`, `code-reviewer`, …): **not
+  vendored** here. Bootstrap provisions them from the curated allowlist in
+  `../agent-registry.yaml` — installing only what isn't already present, from a pinned MIT source.
+  See ADR-014. The roster below documents the roles; bodies come from the registry source.
 
 ## Roster
 
 | Agent | Role | Source |
 |-------|------|--------|
-| `domain-reviewer` | Reviews domain primitives (identifiers, money, units, codes, enums, i18n). **Filled per project** from SPEC.md Phase 2. | core (slot) |
-| `code-reviewer` | General code quality, security, best-practice review. | core¹ |
-| `debugger` | Root-cause diagnosis of failures, logs, stack traces. | core¹ |
-| `research-analyst` | Build-vs-buy research; synthesizes options + trade-offs for ADRs. | core¹ |
-| `security-auditor` | Vulnerability and compliance review. | core¹ |
-| `documentation-engineer` | Keeps docs in sync with code. | core¹ |
-| `api-designer` | REST/GraphQL design, OpenAPI, versioning. | core¹ |
-
-¹ These are widely-used general agents. If you already maintain them globally (`~/.claude/agents/`),
-the bootstrap may reference yours instead of vendoring copies. For a self-contained, reproducible
-project repo, prefer copying them into `.claude/agents/` so collaborators and CI get them too.
+| `domain-reviewer` | Reviews domain primitives (identifiers, money, units, codes, enums, i18n). **Filled per project** from SPEC.md Phase 2. | local (slot) |
+| `code-reviewer` | General code quality, security, best-practice review. | registry |
+| `debugger` | Root-cause diagnosis of failures, logs, stack traces. | registry |
+| `research-analyst` | Build-vs-buy research; synthesizes options + trade-offs for ADRs. | registry |
+| `security-auditor` | Vulnerability and compliance review. | registry |
+| `documentation-engineer` | Keeps docs in sync with code. | registry |
+| `api-designer` | REST/GraphQL design, OpenAPI, versioning. | registry |
 
 ## Provenance & drift
 
