@@ -1,0 +1,106 @@
+# ai-dev-starter | core (template) | v0.2.0
+# Curated sources of Claude Code SKILLS, with non-interactive auto-install.
+#
+# Bootstrap scans the allowlisted sources for skills that fit the project, proposes them
+# (AskUserQuestion), and installs the confirmed set NON-INTERACTIVELY. Provenance is recorded
+# in .claude/SKILL_SOURCES.md.
+#
+# Security: ALLOWLIST only. Install solely via the commands below; never from an unlisted source.
+# Installation runs `npx` packages (claude-code-templates, skills) — both reputable (MIT / Vercel).
+# Scan catalogs at the pinned ref; surface the skill names to the user before installing.
+
+mode: install
+
+sources:
+  # PRIMARY — davila7/claude-code-templates: MIT, scannable catalog, non-interactive install.
+  claude-code-templates:
+    cli: claude-code-templates
+    repo: davila7/claude-code-templates
+    ref: c570e560c9f6ea01944d00a74883aba89b84cf25   # pin for catalog scan / fit-analysis
+    license: MIT
+    catalog: cli-tool/components/skills              # scan here (category/<name>) — no API key needed
+    auto_scan: true
+    auto_install: true
+    install_cmd: "npx claude-code-templates@latest --skill <name> --yes"
+    install_many:  "npx claude-code-templates@latest --skill <name1>,<name2>,<name3> --yes"
+    note: >
+      Also carries Anthropic's Apache-2.0 skills, and can install agents/commands/mcp/hooks/settings
+      via the same CLI (--agent/--command/--mcp/--hook/--setting --yes) — a future unification target.
+
+  # vercel-labs/skills CLI (the engine behind skills.sh): curated repos, non-interactive install.
+  skills-sh:
+    cli: skills
+    site: https://www.skills.sh
+    auto_scan: false        # the skills.sh site index requires an API key (not available) -> no global search
+    auto_install: true
+    list_cmd:    "npx skills add <owner/repo> --list"                              # enumerate a known repo (no key)
+    install_cmd: "npx skills add <owner/repo> --skill <name> --yes --copy -a claude-code"
+    install_global_flag: "-g"
+    # Specific repos to `--list` directly for fit-analysis.
+    curated_repos:
+      - vercel-labs/agent-skills
+    # Curated PROVIDERS (skills.sh org pages). Each org has many repos; the skills.sh site index
+    # needs an API key (unavailable) to auto-enumerate, so at provision time resolve the provider's
+    # specific skill repo(s) (from its skills.sh page or a known repo), then `npx skills add owner/repo
+    # --list`. `focus` lets the bootstrap pick relevant providers by project type.
+    curated_providers:
+      - name: Vercel Labs
+        org: vercel-labs
+        url: "https://www.skills.sh/vercel-labs"
+        focus: [frontend, ai, agents]
+      - name: GitHub
+        org: github
+        url: "https://www.skills.sh/github"
+        focus: [dev-cycle, ci, copilot]
+      - name: Sentry
+        org: getsentry
+        url: "https://www.skills.sh/getsentry"
+        focus: [observability, debugging, error-tracking]
+      - name: Microsoft
+        org: microsoft
+        url: "https://www.skills.sh/microsoft"
+        focus: [azure, devops, ci-cd]
+      - name: OpenAI
+        org: openai
+        url: "https://www.skills.sh/openai"
+        focus: [ai-integrations]
+      - name: Cloudflare
+        org: cloudflare
+        url: "https://www.skills.sh/cloudflare"
+        focus: [edge, workers, infra, dns]
+      - name: LangChain
+        org: langchain-ai
+        url: "https://www.skills.sh/langchain-ai"
+        focus: [ai-agents, rag, llm-pipelines]
+      - name: HashiCorp
+        org: hashicorp
+        url: "https://www.skills.sh/hashicorp"
+        focus: [terraform, vault, iac]
+      - name: Firebase
+        org: firebase
+        url: "https://www.skills.sh/firebase"
+        focus: [auth, database, hosting]
+      - name: Firecrawl
+        org: firecrawl
+        url: "https://www.skills.sh/firecrawl"
+        focus: [web-scraping, data-extraction]
+
+  # anthropics/skills — origin/attribution. Its skills are reachable through claude-code-templates;
+  # alternatively install from its own marketplace. No license file (subset is Apache-2.0).
+  anthropic-skills:
+    repo: anthropics/skills
+    ref: da20c92503b2e8ff1cf28ca81a0df4673debdbf7
+    license: none-stated (subset Apache-2.0)
+    install_via: claude-code-templates                 # prefer: npx claude-code-templates --skill <name> --yes
+    marketplace_alt: "/plugin marketplace add anthropics/skills"
+
+# Project signal -> candidate skill names. Validate names against the live catalog scan before install
+# (catalog names evolve). Bootstrap proposes; user confirms; install non-interactively.
+recommended:
+  generates_pdf:            [pdf-anthropic, pdf-processing-pro]
+  generates_office_docs:    [docx, xlsx, pptx]
+  has_web_frontend:         [frontend-design]
+  needs_artifacts_builder:  [artifacts-builder]
+  builds_mcp_server:        [mcp-builder]
+  builds_claude_app:        [claude-api]
+  authoring_new_skills:     [skill-creator]

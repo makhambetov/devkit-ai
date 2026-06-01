@@ -1,0 +1,35 @@
+# ai-dev-starter | core (template) | v0.2.0
+# Curated sources of MCP (Model Context Protocol) servers.
+#
+# STATUS: GROUNDWORK ONLY — not provisioned by bootstrap yet (planned). MCP servers are
+# *configured* (via .mcp.json or an installed plugin), never copied. This file reserves the
+# structure and a trusted, vendor-led allowlist so MCP provisioning can be added later by
+# the same pattern as agents/skills (scan registry → fit → confirm → configure → provenance).
+#
+# Security: allowlist only. Trusted = model vendors + major infra.
+
+mode: configure          # MCP servers are configured/installed, not copied
+
+sources:
+  mcp-reference:
+    repo: modelcontextprotocol/servers
+    url: https://github.com/modelcontextprotocol/servers
+    license: see-repo (mixed per-server)
+    note: Official reference servers (filesystem, fetch, git, memory, ...).
+  cloudflare-mcp:
+    repo: cloudflare/mcp-server-cloudflare
+    url: https://github.com/cloudflare/mcp-server-cloudflare
+    license: Apache-2.0
+    note: Cloudflare-hosted MCP servers (Workers, KV, R2, D1, ...).
+  huggingface-mcp:
+    repo: huggingface/hf-mcp-server
+    url: https://github.com/huggingface/hf-mcp-server
+    license: see-repo
+    note: Hugging Face Hub MCP server (models, datasets, spaces).
+  # openai: no first-party MCP server repo identified yet — revisit.
+
+# Project signal -> candidate MCP servers (informational until provisioning is implemented).
+recommended:
+  needs_local_fs_or_git_tools:  [mcp-reference]
+  deploys_to_cloudflare:        [cloudflare-mcp]
+  uses_huggingface_models:      [huggingface-mcp]

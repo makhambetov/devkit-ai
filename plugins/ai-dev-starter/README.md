@@ -4,9 +4,11 @@ A reusable, stack-neutral **methodology** for driving AI coding agents (Claude C
 compatible tools) through real software projects — from a vague idea to a structured,
 documented, wave-executed codebase.
 
-It is **not** a code generator. It is a *process* plus reusable agents, skills, and document
-templates, packaged as a **Claude Code plugin**. Installing it gives you `/bootstrap-project`
-(interview → research → generate a tailored workspace) and `/starter-sync` (harvest drift).
+It is **not** a code generator. It is a *process* plus reusable document templates, a curated
+registry of specialist agents/skills, and a wave-based task protocol, packaged as a **Claude Code
+plugin** in the [`devkit-ai`](../../README.md) marketplace. Installing it gives you
+`/bootstrap-project` (interview → research → generate a tailored workspace) and `/starter-sync`
+(harvest drift).
 
 > Lineage: distilled from a hand-rolled setup (the RIMAS project) and informed by
 > [BMAD-METHOD](https://github.com/bmad-code-org/BMAD-METHOD) (role/story model) and
@@ -16,93 +18,97 @@ templates, packaged as a **Claude Code plugin**. Installing it gives you `/boots
 ## The four layers
 
 ```
-/bootstrap-project   ── generator: interview → research → fill templates  (run once, at start)
+/bootstrap-project   ── generator: interview → research → provision → fill templates  (run once)
         ↓
 CLAUDE.md + docs/agent/{SPEC,ARCHITECTURE,DECISIONS,TASKS}.md   ── steering (every session)
         ↓
-docs/agent/stories/<id>.md   ── self-contained context package per unit of work
+docs/agent/stories/<id>.md   ── self-contained context package per unit of work (written at execution)
         ↓
-execute-task skill (wave protocol)   ── execution: dependency waves + review gates
+execute-task skill (wave protocol)   ── execution: dependency waves + named-specialist routing + review gates
 ```
 
-## Packaging: a plugin + marketplace
+## What `/bootstrap-project` does
 
-This repo **is** a Claude Code plugin and a single-plugin marketplace.
+1. **Adapts to you.** Picks a chat language (default English; docs always English) and an interviewee
+   profile — **Technical / Product / Business** — that tunes question depth and jargon.
+2. **Deep interview.** Vision → modules (drill-down) → domain primitives → NFRs & topology.
+3. **Build-vs-buy research.** For every infrastructural concern it researches options (delegated to a
+   `research-analyst` subagent), presents 2–3 with trade-offs plus a "Pick for me" escape, and logs
+   the choice as an ADR in `DECISIONS.md`. Never hand-rolls what a mature library covers.
+4. **Provisions tooling from curated registries** (allowlists, pinned refs, provenance recorded):
+   - **Agents** — from `core/agent-registry.yaml` (source: `VoltAgent/awesome-claude-code-subagents`,
+     MIT). Scans the registry, installs only the gap vs what's already installed, asks where
+     (project vs global), records sources in `.claude/agents/AGENT_SOURCES.md`.
+   - **Skills** — from `core/skill-registry.yaml`, **auto-installed non-interactively**: scans
+     `davila7/claude-code-templates` (MIT catalog) + curated `skills.sh` repos for fit, then installs
+     via `npx ... --yes`. Recorded in `.claude/SKILL_SOURCES.md`.
+   - **MCP servers** — `core/mcp-registry.yaml` reserves trusted vendor sources (Anthropic reference,
+     Cloudflare, Hugging Face). Groundwork only; auto-provisioning not implemented yet.
+5. **Materializes the workspace** and stops — it does **not** write application code. Building happens
+   afterward via `execute-task`. It offers an initial commit of the generated workspace.
 
-- `.claude-plugin/plugin.json` — plugin manifest.
-- `.claude-plugin/marketplace.json` — marketplace catalog (so it can be shared/installed).
-- `skills/` — the **active** tooling loaded when the plugin is installed:
-  `bootstrap-project` and `starter-sync`.
-- `core/` and `profiles/` — **template assets**, not loaded as live skills/agents. The bootstrap
-  reads them via `${CLAUDE_PLUGIN_ROOT}` and copies tailored copies into each new project.
-
-Why a plugin rather than a plain repo or a lone skill: a plugin bundles **agents + skills +
-command** together and is **shareable via a marketplace**, while still being a git repo under the
-hood (the canonical upstream that `starter-sync` diffs against). It is all three at once.
-
-## Repository layout
+## Plugin layout
 
 ```
-ai-dev-starter/
-├── .claude-plugin/
-│   ├── plugin.json           Plugin manifest
-│   └── marketplace.json      Marketplace catalog (source: "./")
-├── VERSION                   Stamped into generated files for drift tracking
-├── skills/                   ACTIVE skills (loaded on install)
-│   ├── bootstrap-project/     /bootstrap-project — generate a new project workspace
-│   └── starter-sync/          /starter-sync — diff a project's .claude/ against upstream
-├── core/                     Stack-neutral templates (assets, not auto-loaded)
-│   ├── CLAUDE.template.md
-│   ├── docs/agent/*.template.md   SPEC, ARCHITECTURE, DECISIONS, TASKS
-│   ├── stories/_TEMPLATE.md
-│   ├── agents/               domain-reviewer slot + reusable-agent roster
-│   └── skills/               execute-task, plan-project (copied into generated projects)
-└── profiles/                 Stack specifics, composable
-    ├── components/           go-gin-backend, react-vite-frontend, go-cli, postgres
-    └── presets/              go-react-monorepo (reference composition)
+plugins/ai-dev-starter/                  (this plugin, inside the devkit-ai marketplace repo)
+├── .claude-plugin/plugin.json
+├── VERSION                              Provenance stamp (kept in sync with plugin.json version)
+├── skills/                              ACTIVE skills (loaded on install)
+│   ├── bootstrap-project/                /bootstrap-project
+│   └── starter-sync/                     /starter-sync
+├── core/                                Stack-neutral assets (NOT auto-loaded)
+│   ├── CLAUDE.template.md · docs/agent/*.template.md · stories/_TEMPLATE.md · templates/gitignore
+│   ├── agent-registry.yaml · skill-registry.yaml · mcp-registry.yaml
+│   ├── agents/                           domain-reviewer slot (+ roster doc)
+│   └── skills/                           execute-task (copied into projects); plan-project (bootstrap aid)
+├── docs/                                DECISIONS.md (ADR log) · ROADMAP.md
+└── profiles/
+    ├── components/                       go-gin-backend, react-vite-frontend, go-cli, postgres
+    └── presets/                          go-react-monorepo (reference composition)
 ```
 
 ## Install & use
 
-### Install the plugin
-This plugin is distributed via the **devkit-ai** marketplace:
 ```
 /plugin marketplace add https://github.com/makhambetov/devkit-ai
 /plugin install ai-dev-starter@devkit-ai
 ```
-(Local development: `/plugin marketplace add /Users/i.makhambetov/ivan/projects/devkit-ai`.)
+Local development: `/plugin marketplace add /path/to/devkit-ai`.
 
-### Start a new project
-1. Create and enter an empty repo: `mkdir my-app && cd my-app && git init`.
-2. Run `/bootstrap-project`.
-3. Answer the interview. The bootstrap researches build-vs-buy decisions, records them in
-   `DECISIONS.md`, and writes a tailored `CLAUDE.md`, `docs/agent/`, agents, skills, and infra.
-4. Build features through stories + the `execute-task` wave protocol.
+Then, in a new empty repo:
+1. `/bootstrap-project`
+2. Answer the interview; confirm the provisioned agents/skills and tech decisions.
+3. Build features with `execute-task` (it writes a story per non-trivial subtask and routes each to a
+   named specialist agent).
 
-### Recommended companion (optional)
-Works best with [superpowers](https://github.com/obra/superpowers) installed — the bootstrap
-detects it and prefers its `brainstorming` / TDD / debugging skills. Without it, the starter falls
-back to its own `plan-project` skill. Nothing here *requires* superpowers.
+## Companion (optional)
+
+Works with [superpowers](https://github.com/obra/superpowers) installed, but **this skill drives the
+flow** — it never hands planning or execution over to superpowers' competing workflow (that produced
+inconsistent output in testing; see DECISIONS ADR-013). superpowers' helpers may be borrowed, not
+delegated to. Nothing here requires superpowers.
 
 ## Profiles: components + presets
 
 A real project is often a **monorepo** of several stack components in sub-directories (e.g. a Go
-backend in `backend/` and a React frontend in `frontend/`). Profiles model this:
+backend in `backend/` and a React frontend in `frontend/`):
 
 - **components/** — one atomic stack each (`go-gin-backend`, `react-vite-frontend`, `go-cli`, `postgres`).
-- **presets/** — a named composition declaring which components live in which sub-directories, plus
-  **seam** agents that only make sense across components (e.g. `api-contract-reviewer`, which checks
-  the backend↔frontend JSON contract).
+- **presets/** — a named composition declaring which components live where, plus **seam** agents that
+  only make sense across components (e.g. `api-contract-reviewer`, backend↔frontend contract checks).
 
 `go-react-monorepo` is the reference preset. Add your own by composing components.
 
 ## Versioning & drift
 
-Generated files carry a provenance header (`ai-dev-starter | <layer> | v<version>`). The
-`/starter-sync` skill diffs a project's `.claude/` against this plugin so improvements made
-mid-project can be harvested back upstream. The plugin is the upstream; projects are downstreams.
+Generated files carry a provenance header (`ai-dev-starter | <layer> | v<version>`). `/starter-sync`
+diffs a project's `.claude/` against this plugin so mid-project improvements can be harvested upstream.
+**Release note:** bump *both* `.claude-plugin/plugin.json` `version` (Claude Code's update signal) and
+the `VERSION` file each release.
 
 ## Status
 
-v0.1.0 — methodology spine + `go-react-monorepo` reference preset, packaged as a plugin.
-Deployment automation is a designed extension seam (`task deploy`), not yet implemented.
+v0.2.0 — methodology spine + `go-react-monorepo` reference preset; interviewee profiles; agent
+provisioning (VoltAgent) and **non-interactive skill auto-install** (davila7/claude-code-templates +
+curated skills.sh repos); MCP registry groundwork. Deployment automation (`task deploy`) and MCP
+provisioning are designed but not yet implemented. See [docs/ROADMAP.md](docs/ROADMAP.md).

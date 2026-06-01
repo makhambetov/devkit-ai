@@ -1,7 +1,7 @@
 {
   "name": "ai-dev-starter",
   "displayName": "AI Dev Starter",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Stack-neutral methodology for driving AI coding agents through real projects: a project bootstrap (interview → build-vs-buy research → generated workspace), a wave-based task protocol, self-contained stories, and a drift harvester. Ships a go-react-monorepo reference profile.",
   "author": {
     "name": "Ivan Makhambetov"

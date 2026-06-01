@@ -2,7 +2,7 @@
 name: bootstrap-project
 description: Use in a new or near-empty repository to bootstrap a project with the ai-dev-starter methodology — runs a deep requirements interview, researches build-vs-buy decisions, and generates a tailored CLAUDE.md, docs/agent/ (SPEC/ARCHITECTURE/DECISIONS/TASKS), stories, agents, skills, .gitignore, and infra from templates. Do not write application code during bootstrap; produce the workspace only.
 ---
-<!-- ai-dev-starter | plugin (active) | v0.1.2 -->
+<!-- ai-dev-starter | plugin (active) | v0.2.0 -->
 
 # bootstrap-project
 
@@ -31,13 +31,27 @@ and stamp it into generated agent/skill files for drift tracking.
   proceed). This is mandatory for build-vs-buy questions — never force the user to type a choice.
 - **Bootstrap produces a workspace, then STOPS.** Do not scaffold or write application code here;
   building happens afterward via the generated `execute-task` skill. Phase 7 hands off.
+- **Interview by profile.** Tailor question depth and framing to the interviewee profile chosen in
+  Phase −1 (Technical / Product / Business).
+- **Delegate heavy lookup to subagents.** Run library/build-vs-buy research (Phase 4) and registry
+  scan/fit-analysis through the `research-analyst` subagent when it is available, to keep the main
+  context lean. You still own the flow and confirm decisions with the user.
 
 ## Phase −1 · Preamble & detection
-- **Conversation language.** Ask (via AskUserQuestion) which language to *converse* in. Default to
-  the user's language. **All generated files and documentation stay in English** regardless — only
-  the chat language changes. Record the choice and use it for the rest of the session.
+- **Conversation language.** Ask (via AskUserQuestion) which language to *converse* in. **Default:
+  English**; offer Russian and other languages as options. **All generated files and documentation
+  stay in English regardless** — say this in the question; only the chat language changes.
+- **Interviewee profile.** Ask (via AskUserQuestion) which best describes the person you're
+  interviewing, and adapt the whole interview to it:
+  - **Technical** (engineer / tech-lead) — go deep on stack, architecture, NFRs; the user drives
+    tech choices; full jargon is fine.
+  - **Product** (PM / founder with some tech background) — balance modules with key tech decisions;
+    moderate jargon; explain trade-offs.
+  - **Business** (domain expert / non-technical) — focus on modules, rules, users, outcomes; minimal
+    jargon; *you* research and recommend the tech (lean on "Pick for me"). Same artifacts result.
 - **context7 MCP** present? Use it for library docs during Phase 4 research.
-- Read `core/` and `profiles/` so you know what templates, components, and presets exist.
+- Read `core/` and `profiles/`, and the registries (`core/agent-registry.yaml`,
+  `core/skill-registry.yaml`, `core/mcp-registry.yaml`) so you know what's available to provision.
 - (Note superpowers per the Global rules: do not let it drive.)
 
 ## Phase 0 · Vision
@@ -65,6 +79,8 @@ For every infrastructural concern (auth, persistence, file storage, queues, paym
 **2–3 options with trade-offs via AskUserQuestion**, and make the **last option always**:
 *"Pick for me (use your best judgement)."* Record the outcome — choice, alternatives, reason — as an
 ADR in `docs/agent/DECISIONS.md`. Never silently invent a dependency.
+Delegate the actual research to the `research-analyst` subagent when available (and use context7 MCP
+for library docs); you synthesize its findings into the 2–3 options and the ADR.
 
 ## Phase 5 · Profile selection & composition
 From topology + stack decisions: use a matching `profiles/presets/<x>` (e.g. `go-react-monorepo`),
@@ -84,7 +100,9 @@ Generate from `core/` + the chosen profile, filling every `{{PLACEHOLDER}}`. Pro
 4. **`.claude/agents/` — provision specialist agents (see "Agent provisioning" below).**
    The goal: `execute-task` must be able to route every subtask to a **named specialist**, never to
    a generic general-purpose agent.
-5. **`.claude/skills/`** — copy `core/skills/execute-task` and `plan-project` (and profile skills).
+5. **`.claude/skills/`** — copy `core/skills/execute-task` and the profile's skills into the project.
+   Do **not** copy `plan-project` (a bootstrap/planning aid, not a project runtime skill). Then
+   **provision skills** from the skill registry (see "Skill provisioning" below).
 6. **`.gitignore`** — copy `core/templates/gitignore` to `./.gitignore` (add component-specific
    entries). Do not rely on a framework scaffolder to create it.
 7. **Infra** (if the preset has it) — `docker-compose.yaml`, `Taskfile.yml`, `.env.example`; adjust
@@ -98,10 +116,14 @@ Read `${CLAUDE_PLUGIN_ROOT}/core/agent-registry.yaml`. Then:
    `local` agents (always — `domain-reviewer`, and seam agents like `api-contract-reviewer` when the
    preset applies) + `recommended.core` + `recommended.components[<each chosen component>]` + any
    `optional_core` the project clearly needs. Confirm the proposed set with the user.
-2. **Inventory what is already installed.** List existing agents in the project `.claude/agents/`,
-   the user's global `~/.claude/agents/`, and any installed plugins. Match by name.
+2. **Inventory what is already installed AND scan the registry.** List existing agents in the project
+   `.claude/agents/`, the user's global `~/.claude/agents/`, and installed plugins (match by name).
+   **Always scan the registry too** — it is the source of truth for *which* agents to provision and
+   *from where*; do not merely accept whatever happens to be installed. For an already-installed
+   agent, still resolve and record its registry source so provenance is reported even when nothing is
+   fetched.
 3. **Gap analysis.** `gap = needed − already-installed`. Agents that already exist are **reused as-is
-   — never re-install or overwrite them.**
+   — never re-install or overwrite them** (but their source is still recorded in step 5).
 4. **Confirm & install the gap (AskUserQuestion).** Show: "✅ already available: …(where)" and
    "⬇️ will install: … from <source>@<ref>". Ask, **per the gap only**, whether to install and
    **where — project `.claude/agents/` or global `~/.claude/agents/`** (ask each time; do not assume).
@@ -110,9 +132,33 @@ Read `${CLAUDE_PLUGIN_ROOT}/core/agent-registry.yaml`. Then:
      fetch from an unlisted repo or an unpinned ref.
    - `local` agents come from the plugin, not the network: fill `domain-reviewer` from Phase 2; copy
      the preset's seam agent(s).
-5. **Record provenance.** Write `.claude/agents/AGENT_SOURCES.md` listing each provisioned agent →
-   `<source repo>@<ref>` (or `local: ai-dev-starter`) and its install location. Include the upstream
-   license/attribution from the registry.
+5. **Record provenance.** Write `.claude/agents/AGENT_SOURCES.md` listing **every** agent in the
+   needed set → `<source repo>@<ref>` (or `local: ai-dev-starter`) and its location (project / global
+   / pre-existing). Include the upstream license/attribution. Report the sources back to the user.
+
+### Skill provisioning (Phase 6 step 5, in detail)
+Read `${CLAUDE_PLUGIN_ROOT}/core/skill-registry.yaml`. Skills are **auto-installed non-interactively**
+from allowlisted sources. Steps:
+1. **Scan for fit.** Scan the primary catalog `claude-code-templates` (davila7, MIT) at its pinned ref
+   (`catalog` path), and `--list` each `skills-sh` curated repo. For `skills-sh` `curated_providers`,
+   select providers whose `focus` matches the project (e.g. Sentry for observability, Cloudflare for
+   edge, HashiCorp for IaC), resolve each to its skill repo(s) — the provider page or a known repo,
+   since the skills.sh index needs an unavailable API key — then `--list`. Combine with the registry's
+   `recommended` mapping and project signals (PDFs/office docs? web frontend? MCP server / Claude app?
+   authoring skills?) to shortlist fitting skills. Delegate the scan to `research-analyst` when available.
+2. **Inventory & gap.** List installed skills (project / global / plugins); recommend only the gap.
+3. **Confirm (AskUserQuestion)** the shortlist + install location (project default; global with `-g`
+   if asked).
+4. **Install non-interactively**, using only the registry `install_cmd` for the source:
+   - davila7: `npx claude-code-templates@latest --skill <name1>,<name2> --yes`
+   - skills.sh: `npx skills add <owner/repo> --skill <name> --yes --copy -a claude-code`
+   Run ONLY the allowlisted commands; never install from an unlisted source or unpinned catalog.
+5. **Report sources & record** `.claude/SKILL_SOURCES.md` (each skill → source + exact command used).
+
+### MCP servers (groundwork)
+`${CLAUDE_PLUGIN_ROOT}/core/mcp-registry.yaml` reserves a trusted, vendor-led allowlist of MCP
+servers (Anthropic reference, Cloudflare, Hugging Face). Auto-provisioning is **not implemented yet**;
+for now, just point out obviously-relevant servers to the user. Do not configure MCP automatically.
 
 ## Phase 7 · Verify & hand off
 - **Verification gate — do not claim done until these exist** (list them back to the user):
@@ -120,14 +166,23 @@ Read `${CLAUDE_PLUGIN_ROOT}/core/agent-registry.yaml`. Then:
   `.claude/agents/` (with a named specialist available for every planned subtask),
   `.claude/skills/execute-task`, `.gitignore`, and any preset infra. If any is missing, create it.
 - Summarize what was created and the first 1–2 tasks from `TASKS.md`.
-- Tell the user that **building happens next** via the `execute-task` skill (run it on a task), and
-  how to write a story (`docs/agent/stories/_TEMPLATE.md`).
+- Tell the user that **building happens next** via the `execute-task` skill (run it on a task).
+  **Stories are written then, not now**: `docs/agent/stories/` contains only `_TEMPLATE.md` at this
+  point — that is expected. The template stays; `execute-task` writes a story per non-trivial subtask.
+- **Offer an initial commit (AskUserQuestion).** Offer to `git init` (if not already a repo) and make
+  an initial commit of the generated workspace (docs, `.claude/`, `.gitignore`, infra) — e.g.
+  `chore: bootstrap project workspace (docs + steering + tooling)`. Do not push.
 - The plugin (templates, profiles) stays installed as upstream; nothing needs deleting from it.
 
 ## Rules recap
 - Interview first; write no application code during bootstrap. The deliverable is a workspace.
-- You drive — never delegate the flow to superpowers or another framework.
+- You drive the flow — never delegate it to superpowers/another framework — but **delegate research
+  and registry scans to the `research-analyst` subagent** to keep context lean.
+- Adapt the interview to the chosen profile (Technical / Product / Business).
 - Use AskUserQuestion for choices; every build-vs-buy question includes "Pick for me".
+- Provision agents from `agent-registry.yaml` (scan registry, install only the gap, record sources);
+  provision skills from `skill-registry.yaml` **by installing from source, never copying**.
 - Prefer researched, existing solutions over bespoke ones; record every choice in `DECISIONS.md`.
 - Confirm each phase's summary with the user before advancing.
-- Converse in the user's chosen language; all generated files stay in **English**.
+- **Default chat language is English**; offer Russian/others. All generated files stay in **English**.
+- End by offering an initial commit of the workspace (no push).
